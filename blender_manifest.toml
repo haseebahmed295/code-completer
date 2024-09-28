@@ -1,0 +1,24 @@
+schema_version = "1.0.0"
+
+id = "code_completer"
+version = "1.0.0"
+name = "Code Completer"
+tagline = "code-completion is an addon allows autocompletion of code in text editor"
+maintainer = "haseebahmed295 <quicktiptech@gmail.com>"
+type = "add-on"
+
+# website = "https://extensions.blender.org/add-ons/my-example-package/"
+
+tags = ["User Interface"]
+
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-2.0-or-later",
+]
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+]
