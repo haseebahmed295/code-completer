@@ -1,26 +1,24 @@
-
 import bpy
+from .draw_menu import UIDraw 
 class EventTracker:
-    def __init__(self, draw_ui) -> None:
+    def __init__(self, draw_ui: UIDraw) -> None:
         self.draw = draw_ui
         self._mouse_pos = (0, 0)
-        self.keys_items = [34,35,67,66]
+        self.keys_items = []
+        self.lmb = False
 
-    def disable_keys(self):
-        for i in self.keys_items:
-            bpy.data.window_managers['WinMan'].keyconfigs['Blender user'].keymaps['Text'].keymap_items[i].active = False
-        
-    def enable_keys(self):
-        for i in self.keys_items:
-            bpy.data.window_managers['WinMan'].keyconfigs['Blender user'].keymaps['Text'].keymap_items[i].active = True
 
-    def update_mouse(self):
-        for i, vertices in enumerate(self.draw.ver_divisions):
-            # print(f"mouse pos:({self.mouse_pos}) in rectangle {self.draw.ver_divisions[i]} is in {self.is_point_inside_rectangle(vertices, self.mouse_pos)}")
-            if self.is_point_inside_rectangle(vertices, self.mouse_pos):
-                self.draw.active_mouse_index = i
+    def update_mouse(self) -> None:
+        """Update the active mouse index when the mouse is moved."""
+        if not (self.is_scrollbar_active() or self.is_scrollcol_active()):
+            for index, vertices in enumerate(self.draw.vertices_divisions):
+                if self.is_point_inside_rectangle(vertices, self.mouse_pos):
+                    self.draw.active_mouse_index = index
+                    self.redraw()
+                    break
+            else:
+                self.draw.active_mouse_index = -1
                 self.redraw()
-                break
         else:
             self.draw.active_mouse_index = -1
             self.redraw()
@@ -31,16 +29,24 @@ class EventTracker:
         else:  
             self.draw.active_index = self.draw.active_index + 1
         self.redraw()
+        
     def scroll(self, event , mouse_pos):
         if self.is_point_inside_rectangle(self.draw.vertices, mouse_pos):
             if event.type == 'WHEELUPMOUSE':
                 self.draw.increment_text_up()
             elif event.type == 'WHEELDOWNMOUSE':
-                self.draw.incremet_text_down()
+                self.draw.increment_text_down()
             self.redraw()
-            return False
-        else:
             return True
+        else:
+            return False
+        
+    def is_scrollbar_active(self):
+        return self.draw.scroll_bar and (self.is_point_inside_rectangle(self.draw.scroll_bar.scrollbar_vertices, self.mouse_pos) or self.lmb)
+        
+    def is_scrollcol_active(self):
+        return self.draw.scroll_bar and self.is_point_inside_rectangle(self.draw.scroll_bar.scrollcol_vertices, self.mouse_pos)
+    
     @property
     def mouse_pos(self):
         return self._mouse_pos
@@ -49,6 +55,9 @@ class EventTracker:
     def mouse_pos(self, value):
         self._mouse_pos = value
         self.update_mouse()
+        if self.draw.scroll_bar:
+            self.draw.scroll_bar.is_scrollbar_active = self.is_scrollbar_active()
+            self.draw.scroll_bar.is_scrollcol_active = self.is_scrollcol_active()
 
     @staticmethod
     def redraw():
@@ -56,7 +65,6 @@ class EventTracker:
             if area.type == 'TEXT_EDITOR':
                 area.tag_redraw()
         
-
     @staticmethod
     def is_point_inside_rectangle(vertices, point):
         """

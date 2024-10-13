@@ -2,10 +2,10 @@ bl_info = {
     "name": "Code Completer",
     "description": " code-completion is an addon allows autocompletion of code in text editor",
     "author": "haseebahmad295",
-    "version": (0, 1, 0),
+    "version": (1, 1, 0),
     "blender": (3, 6, 0),
     "location": "Text",
-    "category": "Object" }
+    "category": "Development" }
     
 import bpy
 from bpy.types import (
@@ -22,6 +22,7 @@ class Search_Text(Operator):
     bl_label = "Search Text"
 
     com: bpy.props.StringProperty(name="Completion Command")
+    lmb = False
     @classmethod
     def poll(cls, context):
         return not len(bpy.data.texts) == 0 and context.scene.code_suggest
@@ -48,18 +49,18 @@ class Search_Text(Operator):
                 if options:
                     self.draw_ui = UIDraw(context,options ,sc)
                     self.draw_ui.show()
-                    self.start_Tracker(context)
+                    self.start_Tracker(event)
                     # self._tracker = context.window_manager.event_timer_add(1, window=context.window)
                     context.window_manager.modal_handler_add(self)
                 return {'RUNNING_MODAL'}
         return {'FINISHED'}
     
-    def start_Tracker(self, context):
+    def start_Tracker(self, event):
         self.mouse_tracker = EventTracker(self.draw_ui)
-        self.mouse_tracker.disable_keys()
+        self.mouse_tracker.mouse_pos = (event.mouse_region_x, event.mouse_region_y)
+        self.mouse_pos_y = self.draw_ui.cursor_y
 
     def stop_tracker(self, context):
-        self.mouse_tracker.enable_keys()
         self.draw_ui.erase()
         self.mouse_tracker.redraw()
 
@@ -67,37 +68,50 @@ class Search_Text(Operator):
         del self.draw_ui
 
     def modal(self, context, event):
+        # debug(event.type , event.value)
         """Modal handler for the text completion operator."""
-
         # Handle mouse selection.
+        if self.mouse_tracker.lmb:
+            if event.value == 'RELEASE':
+                self.mouse_tracker.lmb = None
+                return {'RUNNING_MODAL'}
+
+
         if event.type == 'LEFTMOUSE':
-            if self.draw_ui.active_mouse_index != -1:
-                self.com = self.draw_ui.get_mouse_choice()
-                self.stop_tracker(context)
-                self.execute(context)
-                return {'FINISHED'}
-            else:
-                self.stop_tracker(context)
-                return {'CANCELLED'}
-        # Handle scrolling.
-        if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
-            if not self.mouse_tracker.scroll(event, (event.mouse_region_x, event.mouse_region_y)):
-                return {'PASS_THROUGH'}
-            else:
-                self.stop_tracker(context)
-                return {'CANCELLED'}
+            # Check if mouse on the scroll bar
+                if self.draw_ui.active_mouse_index != -1:
+                    self.com = self.draw_ui.get_mouse_choice()
+                    self.stop_tracker(context)
+                    self.execute(context)
+                    return {'FINISHED'}
+                elif self.mouse_tracker.is_scrollcol_active():
+                    self.mouse_tracker.lmb = event.value == 'PRESS'
+                    return {'RUNNING_MODAL'} # For handling scroll bar
+                else:
+                    self.stop_tracker(context)
+                    return {'CANCELLED'}
         # Handle mouse movement.
         if event.type == 'MOUSEMOVE':
+            if self.mouse_tracker.lmb:
+                self.draw_ui.scroll_bar.update_scroll(event.mouse_region_y)
             self.mouse_tracker.mouse_pos = (event.mouse_region_x, event.mouse_region_y)
             return {'PASS_THROUGH'}
+            
+        # Handle scrolling.
+        if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            if self.mouse_tracker.scroll(event, (event.mouse_region_x, event.mouse_region_y)):
+                return {'RUNNING_MODAL'}
+            else:
+                self.stop_tracker(context)
+                return {'CANCELLED'}
      
         # Handle key presses.
         if event.value == 'PRESS':
             if event.type in {'UP_ARROW', 'DOWN_ARROW'}:
                 self.mouse_tracker.increment_text(event.type == 'UP_ARROW')
-                return {'PASS_THROUGH'}
+                return {'RUNNING_MODAL'}
             elif event.type == 'RET':
-                self.com = self.draw_ui.choise_text
+                self.com = self.draw_ui.choice_text
                 self.stop_tracker(context)
                 self.execute(context)
                 return {'FINISHED'}
@@ -105,7 +119,7 @@ class Search_Text(Operator):
                 bpy.ops.text.delete(type='PREVIOUS_CHARACTER')
                 self.stop_tracker(context)
                 return {'FINISHED'}
-            elif event.type == 'ESC':
+            elif event.type in {'ESC', 'RIGHTMOUSE'}:
                 self.stop_tracker(context)
                 return {'CANCELLED'}
             else:
@@ -150,8 +164,8 @@ class Search_Text(Operator):
             bpy.ops.text.move(type='NEXT_CHARACTER')
         return {'FINISHED'}
 
-class Code_PT_Complete_panel(Panel):
-    bl_idname = "Code_PT_Complete_panel"
+class Code_PT_AutoComplete_panel(Panel):
+    bl_idname = "Code_PT_AutoComplete_panel"
     bl_label = "Auto Complete"
     bl_space_type = "TEXT_EDITOR"
     bl_region_type = 'WINDOW'
@@ -161,6 +175,7 @@ class Code_PT_Complete_panel(Panel):
         layout = self.layout
         col = layout.column()
         col.prop(context.scene, "auto_import")
+        col.prop(context.scene, "show_private", text="Show Internal")
 
 class Code_Execute(Operator):
     bl_idname = "text.execute"
@@ -203,9 +218,42 @@ class Auto_Properties(bpy.types.AddonPreferences):
         size=4,
         min=0.0,
         max=1.0,
-        default=(0.63137 , 0.66667 , 0.6666, 1)
+        default=(0.4 , 0.4 , 0.4, 0.4)
     )
     font_size: bpy.props.IntProperty(name="Font Size", default=12)
+    font_id: bpy.props.IntProperty(name="Font ID", default=0)
+    text_color: bpy.props.FloatVectorProperty(
+        name="Text Color",
+        subtype='COLOR',
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(1 , 1 , 1, 1)
+    )
+    scrollbar_color: bpy.props.FloatVectorProperty(
+        name="Scrollbar Color",
+        subtype='COLOR',
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(0.5 , 0.5 , 0.5, 0.5)
+    )
+    scrollbar_active_color: bpy.props.FloatVectorProperty(
+        name="Scrollbar Active Color",
+        subtype='COLOR',
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(0.6 , 0.6 , 0.6, 0.6)
+    )
+    scrollcol_color: bpy.props.FloatVectorProperty(
+        name="ScrollCol Color",
+        subtype='COLOR',
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(0.14510 , 0.14510 , 0.14902, 1)
+    )
     type_menu: bpy.props.EnumProperty(
         name="Type",
         items=[
@@ -221,7 +269,7 @@ class Auto_Properties(bpy.types.AddonPreferences):
         row.prop(self, "type_menu" , expand=True)
 
         if self.type_menu == 'UI':
-            main_row = layout.row()         
+            main_row = layout.grid_flow(row_major=False, columns=0, even_columns=True, even_rows=False, align=False)      
 
             ui_col = main_row.box().column()
             ui_col.label(text="UI: ")
@@ -231,6 +279,7 @@ class Auto_Properties(bpy.types.AddonPreferences):
             row.prop(self, "ui_width" , text="Cell Width")
             row = ui_col.row(align=True)
             row.prop(self, "items" , text="Max Options" )
+            row = ui_col.row(align=True)
 
             text_col = main_row.box().column()
             text_col.label(text="Text: ")
@@ -240,11 +289,20 @@ class Auto_Properties(bpy.types.AddonPreferences):
             row.prop(self, "y_offset")
             row = text_col.row(align=True)
             row.prop(self, "font_size" , expand=True)
-
+            row = text_col.row(align=True)
+            row.prop(self, "font_id" , expand=True)
+            row = text_col.row(align=True)
+            
             col = layout.column(align=True)
+            col.prop(self, "text_color")
             col.prop(self, "background_color")
             col.prop(self, "active_color")
             col.prop(self, "mouse_highlight_color")
+            col.prop(self, "scrollbar_color")
+            col.prop(self, "scrollbar_active_color")
+            col.prop(self, "scrollcol_color")
+
+
 
         elif self.type_menu == 'KEYS':
             draw_keymap_items(self, context , code_keymaps)
@@ -261,13 +319,13 @@ def code_suggest_menu(self, context: bpy.types.Context) -> None:
 
     row = layout.row(align=True)
     row.prop(context.scene, "code_suggest", text="", icon="VIEWZOOM")
-    row.popover(Code_PT_Complete_panel.bl_idname, text="")
+    row.popover(Code_PT_AutoComplete_panel.bl_idname, text="")
 
 code_keymaps = []
 
 classes = [
     Code_Execute,
-    Code_PT_Complete_panel,
+    Code_PT_AutoComplete_panel,
     Search_Text,
     Auto_Properties,
 ]
@@ -320,6 +378,11 @@ def register() -> None:
         description="Automatically import modules for completion",
         default=True,
     )
+    bpy.types.Scene.show_private = bpy.props.BoolProperty(
+        name="Show Internal Attributes",
+        description="Toggle to show internal attributes",
+        default=False,
+    )
 
     bpy.types.TEXT_HT_header.append(code_suggest_menu)
     register_keymaps()
@@ -331,6 +394,7 @@ def unregister() -> None:
     bpy.types.TEXT_HT_header.remove(code_suggest_menu)
     del bpy.types.Scene.code_suggest
     del bpy.types.Scene.auto_import
+    del bpy.types.Scene.show_private
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 

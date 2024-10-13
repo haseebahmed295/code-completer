@@ -31,7 +31,7 @@ def complete(context: bpy.types.Context) -> Optional[Tuple[str, int, str]]:
         #         cursor -= 1
         # except IndexError:
         #     pass
-        result = intellisense.expand(line, cursor, console.locals, private=bpy.app.debug_python)
+        result = intellisense.expand(line, cursor, console.locals, private=context.scene.show_private)
     except AttributeError:
         result = None
     return result

@@ -1,9 +1,9 @@
 schema_version = "1.0.0"
 
 id = "code_completer"
-version = "1.0.0"
+version = "1.1.0"
 name = "Code Completer"
-tagline = "code-completion is an addon allows autocompletion of code in text editor"
+tagline = "code-completion allows autocompletion of code in text editor"
 maintainer = "haseebahmed295 <quicktiptech@gmail.com>"
 type = "add-on"
 
@@ -21,4 +21,5 @@ license = [
 paths_exclude_pattern = [
   "__pycache__/",
   "/.git/",
+  ".gitignore"
 ]

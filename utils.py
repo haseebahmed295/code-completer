@@ -1,5 +1,6 @@
 import bpy
 import rna_keymap_ui
+import textwrap
 
 try:
     import icecream
@@ -7,6 +8,24 @@ try:
 except ImportError:
     debug = print
 
+def get_pref(context: bpy.types.Context) -> bpy.types.AddonPreferences: 
+    return context.preferences.addons[__package__].preferences
+def shorten_with_prefix(text: str, width: int, placeholder: str = "...") -> str:
+    if len(text) <= width:
+        return text
+    
+    # Calculate the maximum length we can use for the prefix
+    prefix_length = width - len(placeholder)
+    
+    # Find the last space before the prefix_length
+    last_space_index = text.rfind(' ', 0, prefix_length + 1)
+    
+    if last_space_index == -1:
+        # No space found, truncate at prefix_length
+        return text[:prefix_length] + placeholder
+    
+    # Truncate at the last space
+    return text[:last_space_index] + placeholder
 def get_character_widht(text_editor: bpy.types.SpaceTextEditor, firstx: float, lines: list[bpy.types.TextLine]) -> float:
     """
     Returns the width of a single character in the text editor.
@@ -74,7 +93,7 @@ def get_cursor_location(text_editor: bpy.types.SpaceTextEditor) -> tuple:
     else:
         x = x_offset * char_count
 
-    return (x, y)
+    return (x, y , x_offset)
 
 def draw_keymap_items(self, context: bpy.types.Context, keymaps: list[tuple[bpy.types.KeyMap, bpy.types.KeyMapItem]]) -> None:
     """Draw keymap items into the UI.
