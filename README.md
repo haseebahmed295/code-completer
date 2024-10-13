@@ -33,9 +33,6 @@
 <ul>
 <li><img src="https://assets.superhivemarket.com/cache/b45a631c782c57d276c80f9c5544f70f.png" style="max-width: 100%; width: 25%;"><br></li>
 </ul>
-<p>Preferences:</p>
-<ul>
-<li><img src="https://assets.superhivemarket.com/cache/041422c1442c36b89772bef5d247f131.png" style="max-width: 100%; width: 50%;"><img src="https://assets.superhivemarket.com/cache/5021915b3c7528f8a3a88c25f3cba454.png" style="max-width: 100%; width: 50%;"></li>
 </ul>
 <h4 class="">Version:</h4>
 <p><b>v1.1:</b></p>
