@@ -3,7 +3,7 @@ from gpu_extras.batch import batch_for_shader
 import blf
 import bpy
 
-from .utils import get_cursor_location ,debug, get_pref, shorten_with_prefix
+from .utils import CharInfo,debug, get_pref, shorten_with_prefix
 
 class UIDraw:
     def __init__(self,context,options: list[str], text_editor: bpy.types.SpaceTextEditor) -> None:
@@ -23,7 +23,8 @@ class UIDraw:
         """
         self.callback_handles = set()
         self.area = context.area
-        self.cursor_x, self.cursor_y , self.char_w = get_cursor_location(text_editor)
+        self.char_info = CharInfo(context, text_editor)
+        self.cursor_x, self.cursor_y = self.char_info.get_cursor()
         self.pref = get_pref(context)
         self.Text_handle = None
         self.UI_handles = []
@@ -106,14 +107,12 @@ class UIDraw:
             self.text_index += 1
             self.scroll_bar.move_scrollbar()
 
-    
     def get_mouse_choice(self) -> str:
         """
         Get the choice of the UI that is currently under the mouse.
         Never Called unless the mouse is over the UI.
         """
         return self.options[self.text_index:self.text_index + self.parts][self.active_mouse_index]
-
     
     def erase(self):
         for handle in self.callback_handles:

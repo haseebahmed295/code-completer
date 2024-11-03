@@ -1,15 +1,15 @@
 schema_version = "1.0.0"
 
 id = "code_completer"
-version = "1.1.0"
+version = "1.2.0"
 name = "Code Completer"
 tagline = "code-completion allows autocompletion of code in text editor"
 maintainer = "haseebahmed295 <quicktiptech@gmail.com>"
 type = "add-on"
 
-# website = "https://extensions.blender.org/add-ons/my-example-package/"
+website = "https://github.com/haseebahmed295/code-completer"
 
-tags = ["User Interface"]
+tags = ["Development"]
 
 blender_version_min = "4.2.0"
 

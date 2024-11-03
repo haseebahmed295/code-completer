@@ -91,19 +91,16 @@ class ScrollBar:
         else:
             return self.draw_ui.pref.scrollcol_color
 
-    def scroll_col_callback(self, _, context):
-        gpu.state.blend_set('ALPHA')  # Enable alpha blending
-        indices = ((0, 1, 2), (2, 1, 3))
+    def _draw_scroll(self, vertices, is_scrollbar):
+        gpu.state.blend_set('ALPHA')
         shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-        batch = batch_for_shader(shader, 'TRIS', {"pos": self.scrollcol_vertices}, indices=indices)
-        shader.uniform_float("color", self.get_scroll_color())
+        batch = batch_for_shader(shader, 'TRIS', {"pos": vertices} , indices=((0, 1, 2), (2, 1, 3)))
+        shader.uniform_float("color", self.get_scroll_color(is_scrollbar))
         batch.draw(shader)
 
+    def scroll_col_callback(self, _, context):
+        self._draw_scroll(self.scrollcol_vertices, False)
+
     def scroll_bar_callback(self, _, context):
-        gpu.state.blend_set('ALPHA')  # Enable alpha blending
-        indices = ((0, 1, 2), (2, 1, 3))
-        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-        batch = batch_for_shader(shader, 'TRIS', {"pos": self.scrollbar_vertices}, indices=indices)
-        shader.uniform_float("color", self.get_scroll_color(True))
-        batch.draw(shader)
+        self._draw_scroll(self.scrollbar_vertices, True)
 

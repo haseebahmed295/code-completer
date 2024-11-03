@@ -1,5 +1,5 @@
+# Assuming we have a module called mymodule.py with the following content:
 import bpy
-
 for area in bpy.context.screen.areas:
     if area.type == 'TEXT_EDITOR':
         # Get the active space data for the Dope Sheet Editor

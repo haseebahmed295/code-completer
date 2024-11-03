@@ -64,7 +64,6 @@ class EventTracker:
         for area in bpy.context.screen.areas:
             if area.type == 'TEXT_EDITOR':
                 area.tag_redraw()
-        
     @staticmethod
     def is_point_inside_rectangle(vertices, point):
         """

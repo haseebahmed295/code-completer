@@ -2,20 +2,54 @@ bl_info = {
     "name": "Code Completer",
     "description": " code-completion is an addon allows autocompletion of code in text editor",
     "author": "haseebahmad295",
-    "version": (1, 1, 0),
+    "url": "https://github.com/haseebahmed295/code-completer",
+    "version": (1, 2, 0),
     "blender": (3, 6, 0),
     "location": "Text",
     "category": "Development" }
-    
 import bpy
 from bpy.types import (
     Panel,
     Operator,
 )
-from .auto_complete import complete , execute_code
+from .auto_complete import complete
 from .draw_menu import  UIDraw
 from .event_tracker import EventTracker
-from .utils import debug , draw_keymap_items
+from .utils import debug , draw_keymap_items, get_text_editor_context
+from .func_insperter import InfoUi
+
+class MousePositionTimer(bpy.types.Operator):
+    bl_idname = "custom.mouse_position_timer"
+    bl_label = "Mouse Position Timer"
+
+    context = None
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def invoke(self, context, event):
+        """Invoke the operator to show the code completion menu."""
+        mouse_pos = (event.mouse_region_x, event.mouse_region_y)
+        if InfoUi.mouse_tracker == mouse_pos:
+            return {'FINISHED'}
+        InfoUi.mouse_tracker = mouse_pos
+        InfoUi(context, mouse_pos)
+        return {'FINISHED'}
+
+    @classmethod
+    def analyser(cls):
+        EventTracker.redraw()
+        if not cls.context:
+            cls.context = get_text_editor_context()
+        with bpy.context.temp_override(**cls.context):
+            bpy.ops.custom.mouse_position_timer("INVOKE_DEFAULT")
+        return .001
+
+# Still Worling on it
+# bpy.app.timers.register(MousePositionTimer.analyser)
+
+
 class Search_Text(Operator):
     '''Options'''
     bl_idname = "text.search_text"
@@ -29,8 +63,8 @@ class Search_Text(Operator):
     def invoke(self, context, event):
         bpy.ops.text.insert(text=event.ascii)
 
-        sc = context.space_data
-        text = sc.text
+        text_editor = context.space_data
+        text = text_editor.text
         if text and text.current_character > 0:
             left_body_line = text.current_line.body[:text.current_character]
             options = None            
@@ -47,7 +81,7 @@ class Search_Text(Operator):
                         options = [result[0].replace(left_body_line, "")]
                 
                 if options:
-                    self.draw_ui = UIDraw(context,options ,sc)
+                    self.draw_ui = UIDraw(context,options ,text_editor)
                     self.draw_ui.show()
                     self.start_Tracker(event)
                     # self._tracker = context.window_manager.event_timer_add(1, window=context.window)
@@ -176,17 +210,6 @@ class Code_PT_AutoComplete_panel(Panel):
         col = layout.column()
         col.prop(context.scene, "auto_import")
         col.prop(context.scene, "show_private", text="Show Internal")
-
-class Code_Execute(Operator):
-    bl_idname = "text.execute"
-    bl_label = "Execute"
-
-    def execute(self, context):
-        sc = context.space_data
-        text = sc.text
-        execute_code(context , text.current_line)
-        self.report({'INFO'}, "Code Executed")
-        return {'FINISHED'}
 
 class Auto_Properties(bpy.types.AddonPreferences):
     bl_idname = __package__
@@ -320,14 +343,15 @@ def code_suggest_menu(self, context: bpy.types.Context) -> None:
     row = layout.row(align=True)
     row.prop(context.scene, "code_suggest", text="", icon="VIEWZOOM")
     row.popover(Code_PT_AutoComplete_panel.bl_idname, text="")
+    
 
 code_keymaps = []
 
 classes = [
-    Code_Execute,
     Code_PT_AutoComplete_panel,
     Search_Text,
     Auto_Properties,
+    MousePositionTimer
 ]
 
 def register_keymaps() -> None:
@@ -336,13 +360,7 @@ def register_keymaps() -> None:
     """
     keymaps = bpy.context.window_manager.keyconfigs.addon.keymaps
     if keymaps:
-        keymap = keymaps.new(name="Text", space_type="TEXT_EDITOR")
 
-        keymap_item = keymap.keymap_items.new(
-            Code_Execute.bl_idname, type="R", value="PRESS" , ctrl = True)
-
-        code_keymaps.append((keymap, keymap_item))
-        
         keymap = keymaps.new(name="Text", space_type="TEXT_EDITOR")
 
         keymap_item = keymap.keymap_items.new(
@@ -365,6 +383,8 @@ def register() -> None:
     """
     Register the classes and keymaps for the add-on.
     """
+    
+    
     for cls in classes:
         bpy.utils.register_class(cls)
 
@@ -383,18 +403,23 @@ def register() -> None:
         description="Toggle to show internal attributes",
         default=False,
     )
-
     bpy.types.TEXT_HT_header.append(code_suggest_menu)
+
     register_keymaps()
 def unregister() -> None:
     """
     Unregister the classes, keymaps, and property for the add-on.
     """
+    try:
+        bpy.app.timers.unregister(MousePositionTimer.analyser)
+    except:
+        pass
     unregister_keymaps()
     bpy.types.TEXT_HT_header.remove(code_suggest_menu)
     del bpy.types.Scene.code_suggest
     del bpy.types.Scene.auto_import
     del bpy.types.Scene.show_private
+    
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
