@@ -2,7 +2,7 @@
 <h4 class=""><b>Basic Feature:</b><br></h4>
 <ul>
 <li>Auto imports modules in the script for code suggestion.<br></li>
-<li>Allows users to run a single line of code in the console for code completion <img src="https://assets.superhivemarket.com/cache/d18d1e0c21dafd7e88185a9becd7e56a.png" style="max-width: 100%; width: 70.6333px; height: 22.0738px;"></li>
+<li>Auto Analyze code for intellisense<br></li>
 <li>Customizable UI </li>
 <li>Provide suggestion on each text input</li>
 </ul>
