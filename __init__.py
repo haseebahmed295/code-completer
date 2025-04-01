@@ -21,7 +21,6 @@ from .func_insperter import InfoUi
 class MousePositionTimer(bpy.types.Operator):
     bl_idname = "custom.mouse_position_timer"
     bl_label = "Mouse Position Timer"
-
     context = None
 
     @classmethod
@@ -41,13 +40,14 @@ class MousePositionTimer(bpy.types.Operator):
     def analyser(cls):
         EventTracker.redraw()
         if not cls.context:
-            cls.context = get_text_editor_context()
-        with bpy.context.temp_override(**cls.context):
-            bpy.ops.custom.mouse_position_timer("INVOKE_DEFAULT")
+            context = get_text_editor_context()
+        if context:
+            with bpy.context.temp_override(**context):
+                bpy.ops.custom.mouse_position_timer("INVOKE_DEFAULT")
         return .001
 
 # Still Worling on it
-# bpy.app.timers.register(MousePositionTimer.analyser)
+bpy.app.timers.register(MousePositionTimer.analyser)
 
 
 class Search_Text(Operator):
@@ -198,8 +198,8 @@ class Search_Text(Operator):
             bpy.ops.text.move(type='NEXT_CHARACTER')
         return {'FINISHED'}
 
-class Code_PT_AutoComplete_panel(Panel):
-    bl_idname = "Code_PT_AutoComplete_panel"
+class Code_PT_AutoComplete(Panel):
+    bl_idname = "CODE_PT_AutoComplete"
     bl_label = "Auto Complete"
     bl_space_type = "TEXT_EDITOR"
     bl_region_type = 'WINDOW'
@@ -342,13 +342,13 @@ def code_suggest_menu(self, context: bpy.types.Context) -> None:
 
     row = layout.row(align=True)
     row.prop(context.scene, "code_suggest", text="", icon="VIEWZOOM")
-    row.popover(Code_PT_AutoComplete_panel.bl_idname, text="")
+    row.popover(Code_PT_AutoComplete.bl_idname, text="")
     
 
 code_keymaps = []
 
 classes = [
-    Code_PT_AutoComplete_panel,
+    Code_PT_AutoComplete,
     Search_Text,
     Auto_Properties,
     MousePositionTimer

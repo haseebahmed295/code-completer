@@ -8,12 +8,14 @@ try:
 except ImportError:
     debug = print
 
-
 class CharInfo:
     def __init__(self,context,  text_editor: bpy.types.SpaceTextEditor):
         self.text_editor = text_editor
         self.context = context
-        self.lines = text_editor.text.lines
+        if text_editor.text:
+            self.lines = text_editor.text.lines
+        else:
+            self.lines = []
         
     def get_charwidth(self) -> tuple[float, float]:
         """
@@ -212,9 +214,7 @@ def draw_keymap_items(self, context: bpy.types.Context, keymaps: list[tuple[bpy.
 def get_text_editor_context():
     # Find Text Editor area
     text_area = next((area for area in bpy.context.screen.areas if area.type == 'TEXT_EDITOR'), None)
-
     if not text_area:
-        # Create new Text Editor area if none exists
         return None
 
     # Create context override

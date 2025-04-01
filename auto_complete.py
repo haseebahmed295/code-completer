@@ -4,6 +4,8 @@ from console_python import get_console
 from bl_console_utils.autocomplete import intellisense
 from typing import Optional, Tuple
 from .utils import debug
+import sys
+import io
 Console = None
 def complete(context: bpy.types.Context) -> Optional[Tuple[str, int, str]]:
     """
@@ -67,8 +69,34 @@ def module_importer(context , console: code.InteractiveConsole , im_libs = []):
             finally:
                 im_libs.append(line.body)
                 
+
+
+def silent_runcode(console: code.InteractiveConsole, code_line: str):
+    """
+    Executes the given line of code in the console silently (no output to stdout or stderr).
+    """
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+
+    # Redirect stdout and stderr to null
+    sys.stdout = io.StringIO()
+    sys.stderr = io.StringIO()
+
+    try:
+        console.runcode(code_line)
+    except Exception:
+        pass  # Handle exceptions silently if needed
+    finally:
+        # Restore original stdout and stderr
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+
+# Example usage inside the analyze_code function
 def analyze_code(context, console: code.InteractiveConsole) -> None:
-    """Analyze each line of code in the text editor and execute it if it is a valid statement."""
+    """
+    Analyze each line of code in the text editor and execute it if it is a valid statement,
+    suppressing any output or errors.
+    """
     excluded_statements = [
         "import ",
         "from ",
@@ -83,6 +111,8 @@ def analyze_code(context, console: code.InteractiveConsole) -> None:
         "in ",
         "return ",
         "yield ",
+        "bpy.ops.",
+        ")"
     ]
 
     for line in context.space_data.text.lines:
@@ -92,7 +122,9 @@ def analyze_code(context, console: code.InteractiveConsole) -> None:
         if any(line.body.startswith(statement) for statement in excluded_statements):
             continue
 
-        console.runcode(line.body)
+        # Execute the line silently
+        silent_runcode(console, line.body)
+
         
 def get_autoconsole(context):
     for area in context.screen.areas:

@@ -118,7 +118,7 @@ class InfoUi:
             line_index (int): The line index of the mouse position.
             char_index (int): The character index of the mouse position.
         """
-        x, y, _ = cls.char_info.get_char_location(line_index, char_index)
+        x, y = cls.char_info.get_char_location(line_index, char_index)
         max_height = 500
         text_height = len(cls.text) * cls.line_height
         
