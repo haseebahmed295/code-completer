@@ -1,3 +1,4 @@
+import rna_keymap_ui
 bl_info = {
     "name": "Code Completer",
     "description": " code-completion is an addon allows autocompletion of code in text editor",
@@ -330,7 +331,7 @@ class Auto_Properties(bpy.types.AddonPreferences):
 
 
         elif self.type_menu == 'KEYS':
-            draw_keymap_items(self, context , code_keymaps)
+            draw_keymap_items(self, context, code_keymaps)
 
 def code_suggest_menu(self, context: bpy.types.Context) -> None:
     """Draw the code suggest menu in the Text header.
@@ -346,7 +347,7 @@ def code_suggest_menu(self, context: bpy.types.Context) -> None:
     row.prop(context.scene, "code_suggest", text="", icon="VIEWZOOM")
     row.popover(Code_PT_AutoComplete.bl_idname, text="")
     
-
+code_keymaps = []
 
 
 classes = [
@@ -361,8 +362,10 @@ def register_keymaps() -> None:
     Register keymaps for the add-on.
     """
     try:
-        keymaps = bpy.context.window_manager.keyconfigs.user.keymaps.get('Text').keymap_items.get('text.insert')
-        keymaps.idname = Search_Text.bl_idname
+        keymaps = bpy.context.window_manager.keyconfigs.user.keymaps.get('Text')
+        keymapsitem = keymaps.keymap_items.get('text.insert')
+        keymapsitem.idname = Search_Text.bl_idname
+        code_keymaps.append((keymapsitem.idname, 'text.insert'))
     except:
         raise Exception("Keymap not found")
         
@@ -371,9 +374,11 @@ def unregister_keymaps() -> None:
     Unregister keymaps for the add-on.
     """
     try:
-        keymaps = bpy.context.window_manager.keyconfigs.get(
-            'Blender user').keymaps.get('Text').keymap_items.get(Search_Text.bl_idname)
-        keymaps.idname = 'text.insert'
+        for keymap_item in code_keymaps:
+            keymaps = bpy.context.window_manager.keyconfigs.user.keymaps.get('Text')
+            keymapsitem = keymaps.keymap_items.get(keymap_item[0])
+            keymapsitem.idname = keymap_item[1]
+            code_keymaps.remove(keymap_item)
     except:
         raise Exception("Keymap not found")
 
@@ -403,8 +408,7 @@ def register() -> None:
     )
     bpy.types.TEXT_HT_header.append(code_suggest_menu)
 
-    bpy.app.timers.register(register_keymaps)
-    # register_keymaps()
+    bpy.app.timers.register(register_keymaps  , persistent=True)
 def unregister() -> None:
     """
     Unregister the classes, keymaps, and property for the add-on.

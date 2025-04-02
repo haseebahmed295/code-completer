@@ -189,10 +189,10 @@ def draw_keymap_items(self, context: bpy.types.Context, keymaps: list[tuple[bpy.
     user_keyconfig = context.window_manager.keyconfigs.user
     last_keymap_name = ""
 
-    for keymap, keymap_item in keymaps:
+    for key_items in keymaps:
         # Get the keymap and keymap item from the user's keyconfig
-        user_keymap = user_keyconfig.keymaps[keymap.name]
-        user_keymap_item = next((item for item in user_keymap.keymap_items if item.idname == keymap_item.idname), None)
+        user_keymap = user_keyconfig.keymaps['Text']
+        user_keymap_item = next((item for item in user_keymap.keymap_items if item.idname == key_items[0]), None)
 
         if user_keymap_item:
             # Draw a label with the keymap name if it has changed
