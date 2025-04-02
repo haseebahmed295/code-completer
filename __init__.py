@@ -59,10 +59,11 @@ class Search_Text(Operator):
     lmb = False
     @classmethod
     def poll(cls, context):
-        return not len(bpy.data.texts) == 0 and context.scene.code_suggest
+        return not len(bpy.data.texts) == 0
     def invoke(self, context, event):
         bpy.ops.text.insert(text=event.ascii)
-
+        if not context.scene.code_suggest:
+            return {'PASS_THROUGH'}
         text_editor = context.space_data
         text = text_editor.text
         if text and text.current_character > 0:
@@ -87,6 +88,7 @@ class Search_Text(Operator):
                     # self._tracker = context.window_manager.event_timer_add(1, window=context.window)
                     context.window_manager.modal_handler_add(self)
                 return {'RUNNING_MODAL'}
+
         return {'FINISHED'}
     
     def start_Tracker(self, event):
@@ -345,7 +347,7 @@ def code_suggest_menu(self, context: bpy.types.Context) -> None:
     row.popover(Code_PT_AutoComplete.bl_idname, text="")
     
 
-code_keymaps = []
+
 
 classes = [
     Code_PT_AutoComplete,
@@ -358,26 +360,22 @@ def register_keymaps() -> None:
     """
     Register keymaps for the add-on.
     """
-    keymaps = bpy.context.window_manager.keyconfigs.addon.keymaps
-    if keymaps:
-
-        keymap = keymaps.new(name="Text", space_type="TEXT_EDITOR")
-
-        keymap_item = keymap.keymap_items.new(
-            Search_Text.bl_idname, type="TEXTINPUT", value="PRESS")
-
-        code_keymaps.append((keymap, keymap_item))
+    try:
+        keymaps = bpy.context.window_manager.keyconfigs.user.keymaps.get('Text').keymap_items.get('text.insert')
+        keymaps.idname = Search_Text.bl_idname
+    except:
+        raise Exception("Keymap not found")
         
 def unregister_keymaps() -> None:
     """
     Unregister keymaps for the add-on.
     """
-    window_manager = bpy.context.window_manager
-    keyconfig = window_manager.keyconfigs.addon
-    if keyconfig:
-        for keymap, keymap_item in code_keymaps:
-            keymap.keymap_items.remove(keymap_item)
-    code_keymaps.clear()
+    try:
+        keymaps = bpy.context.window_manager.keyconfigs.get(
+            'Blender user').keymaps.get('Text').keymap_items.get(Search_Text.bl_idname)
+        keymaps.idname = 'text.insert'
+    except:
+        raise Exception("Keymap not found")
 
 def register() -> None:
     """
@@ -405,7 +403,8 @@ def register() -> None:
     )
     bpy.types.TEXT_HT_header.append(code_suggest_menu)
 
-    register_keymaps()
+    bpy.app.timers.register(register_keymaps)
+    # register_keymaps()
 def unregister() -> None:
     """
     Unregister the classes, keymaps, and property for the add-on.
