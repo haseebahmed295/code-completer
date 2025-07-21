@@ -1,6 +1,7 @@
 import bpy
 import rna_keymap_ui
 import textwrap
+from console_python import get_console
 
 try:
     import icecream
@@ -223,5 +224,13 @@ def get_text_editor_context():
     ctx['screen'] = bpy.context.screen
     ctx['area'] = text_area
     ctx['region'] = text_area.regions[-1]
-
     return ctx
+
+
+def get_autoconsole(context):
+    """Get the console from the Blender context."""
+    for area in context.screen.areas:
+        if area.type == "CONSOLE":
+            region = area.regions[1]
+            return get_console(hash(region))[0]
+    return None

@@ -48,7 +48,7 @@ class MousePositionTimer(bpy.types.Operator):
         return .001
 
 # Still Worling on it
-bpy.app.timers.register(MousePositionTimer.analyser)
+# bpy.app.timers.register(MousePositionTimer.analyser)
 
 
 class Search_Text(Operator):
@@ -367,7 +367,7 @@ def register_keymaps() -> None:
         keymapsitem.idname = Search_Text.bl_idname
         code_keymaps.append((keymapsitem.idname, 'text.insert'))
     except:
-        raise Exception("Keymap not found")
+        pass
         
 def unregister_keymaps() -> None:
     """
@@ -408,7 +408,7 @@ def register() -> None:
     )
     bpy.types.TEXT_HT_header.append(code_suggest_menu)
 
-    bpy.app.timers.register(register_keymaps  , persistent=True)
+    bpy.app.timers.register(register_keymaps, persistent=True)
 def unregister() -> None:
     """
     Unregister the classes, keymaps, and property for the add-on.

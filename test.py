@@ -1,13 +1,13 @@
-# Assuming we have a module called mymodule.py with the following content:
-import bpy
-for area in bpy.context.screen.areas:
-    if area.type == 'TEXT_EDITOR':
-        # Get the active space data for the Dope Sheet Editor
-        test = area.spaces
-        print("Found Dope Sheet Editor")
-        break
-else:
-    print("No Dope Sheet Editor found")
+# # Assuming we have a module called mymodule.py with the following content:
+# import bpy
+# for area in bpy.context.screen.areas:
+#     if area.type == 'TEXT_EDITOR':
+#         # Get the active space data for the Dope Sheet Editor
+#         test = area.spaces
+#         print("Found Dope Sheet Editor")
+#         break
+# else:
+#     print("No Dope Sheet Editor found")
 
 # # You can add similar logic for other editor types like TIMELINE, ACTION, etc.
 
@@ -34,5 +34,3 @@ else:
 # x_offset = cw = get_cw(st ,  lines)
 # if st.show_line_numbers:
 #     x_offset += cw * (len(repr(len(lines))) + 2)
-
-
