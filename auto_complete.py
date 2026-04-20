@@ -1,7 +1,7 @@
 import ast
 import code
 import bpy
-from bl_console_utils.autocomplete import intellisense
+from ._bl_console_utils.autocomplete import intellisense
 from typing import Optional, Tuple
 from .utils import get_autoconsole , debug
 Console = None

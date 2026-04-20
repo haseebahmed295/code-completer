@@ -1,7 +1,7 @@
 import bpy
 import rna_keymap_ui
 import textwrap
-from console_python import get_console
+from .console_python import get_console
 
 try:
     import icecream
